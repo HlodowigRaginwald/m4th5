@@ -1,0 +1,47 @@
+name: Deploy to Firebase
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    environment: production
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate Service Account
+      run: sh scripts/genServiceAccount.sh
+      env:
+        SA_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+        SA_PRIVATE_KEY_ID: ${{ secrets.GCP_SA_PRIVATE_KEY_ID }}
+        SA_PRIVATE_KEY: ${{ secrets.GCP_SA_PRIVATE_KEY }}
+        SA_CLIENT_EMAIL: ${{ secrets.GCP_SA_CLIENT_EMAIL }}
+        SA_CLIENT_ID: ${{ secrets.GCP_SA_CLIENT_ID }}
+        SA_CERT_URL: ${{ secrets.GCP_SA_CERT_URL }}
+            
+    - name: deploy to firebase
+      run: npm run fb:deploy
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: serviceAccount.json
+        VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+        VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+        VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+        VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+        VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+        VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+        VITE_FIREBASE_MEASUREMENT_ID: ${{ vars.VITE_FIREBASE_MEASUREMENT_ID }}
